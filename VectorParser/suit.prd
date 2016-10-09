@@ -1,0 +1,70 @@
+##-----------start------------
+
+bodySession :   '</thead>' statement(s?) '<table class=tab>'
+                        {
+                            print "Got suit html_bodysection\n" if $::DEBUG_PARSER;
+                            $return = $item[2];
+                        }
+                        |'</thead>' statement(s?) '</table>'
+                        {
+                            print "Got suit html_bodysection\n" if $::DEBUG_PARSER;
+                            $return = $item[2];
+                        }
+                        | <error>
+
+#backgroundSetting   :  '<table class=tab>'	'<tr><td style="background-color:rgb(230,230,230)"><ul class="pagination">' 
+#'<li><a href="Tests.htm">ALL</a></li>	<li>'m{\d+} '(' m{\d+} '-' m{\d+}')</li>' 
+#'<li><a href="' m{\w+} '.htm">' m{\d+} '(' m{\d+} '-' m{\d+} ')</a></li>' 
+#'<li><input style="text-align:center;width:30px" type="text" name="pageNum" onkeyup="pagination(event,this,' "'" 'Tests' "'" ',2)" value="1"/>/ 2</li>'            
+#'<li><a href="Tests2.htm">&gt;</a></li></ul>' '<div class="clr"></div>' '</td></tr></table>'
+#                        { 
+#                            print "Got identifier $item[1]\n" if $::DEBUG_PARSER; 
+#                            $return = $item[1];
+#                        }
+
+statement           :   '<tr>' trblock '</tr>'
+                        {
+                            print "Got statement at $thisline: assignment at line\n" if $::DEBUG_PARSER; 
+                            $return = $item[2];
+                        }
+
+trblock             :  tdblock
+                       '<td id="TableDataC"><a href='m{\w+} '.htm#' label anyblock
+                       tdblock
+                       tdblock
+                       '<td class=TableDataR><a href=' m{\w+} '.htm#' label anyblock
+                       tdblock
+                        {
+                            print "Got trblock at $thisline: $item[3],$item[10] at line\n" if $::DEBUG_PARSER; 
+                            $return = {      suit => $item[5],
+                                             burst  => $item[12]};
+                        }
+                    |tdblock
+                       '<td id="TableDataC"><a href='m{\w+} '.htm#' label anyblock
+                       tdblock
+                       tdblock
+                       '<td class=TableDataR>' m{\w*} '</td>'
+                       tdblock
+                        {
+                            print "Got trblock at $thisline: $item[3],$item[10] at line\n" if $::DEBUG_PARSER; 
+                            $return = {      suit => $item[5],
+                                             burst  => ""};
+                        }
+tdblock           : '<td' anyblock
+                        {
+                            print "Got tdblock at $thisline: at line\n" if $::DEBUG_PARSER; 
+                        }
+
+label             :  m{[a-zA-Z]\w*} #m{\"(.*?)\"} 
+                        { 
+                            print "Got identifier $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+anyblock        :   m{.*<\/td>}
+                    {
+                            print "Got anyblock $item[1]\n------------------------\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                    }
+##------------end-------------
+
+

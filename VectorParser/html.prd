@@ -1,0 +1,52 @@
+##-----------start------------
+
+bodySession :   '<tbody>' statement(s?) '</tbody>'
+                        {
+                            print "Got html_ body_section\n" if $::DEBUG_PARSER;
+                            $return = $item[2];
+                        }
+                        | <error>
+
+statement           :   '<tr>' tdblock '</tr>'
+                        {
+                            print "Got statement at $thisline: assignment at line\n" if $::DEBUG_PARSER; 
+                            $return = $item[2];
+                        }
+
+tdblock           :   '<td rowspan=' m{\d+} 'class="TableDataC"><a name=' label '></a>' label '</td>' 
+                      '<td class=TableDataC>' '@' '</td>' 
+                      '<td class=TableDataC>' MainVector(s?) '</td>'
+                        {
+                            print "Got tdblock at $thisline: $item[2],$item[12] at line\n" if $::DEBUG_PARSER; 
+                            $return = {      burst => $item[4],
+                                             main  => $item[12]};
+                        }
+                    | '<td rowspan=' m{\d+} 'class="TableDataC"><a name=' label '></a>' label '</td>' 
+                      '<td class=TableDataC><a href=' label '#' label '>' label  '</a></td>' 
+                      '<td class=TableDataC>' MainVector(s?) '</td>'
+                        {
+                            print "Got tdblock at $thisline: $item[2],$item[16] at line\n" if $::DEBUG_PARSER; 
+                            $return = {      burst => $item[4],
+                                             main  => $item[16]};
+                        }
+                    | 
+                      '<td class=TableDataC><a href=' label '#' label '>' label  '</a></td>' 
+                      '<td class=TableDataC>' MainVector(s?) '</td>'
+                        {
+                            print "Got tdblock at $thisline: $item[4],$item[9] at line\n" if $::DEBUG_PARSER; 
+                            $return = {      burst => $item[4],
+                                             main  => $item[9]};
+                        }
+MainVector        :  label m{\,?} 
+                        {
+                            print "Got MainVector:$item[1] at line\n" if $::DEBUG_PARSER; 
+                            $return = $item{label};
+                        }
+label             :  m{[a-zA-Z]\w*\.?\w*} #m{\"(.*?)\"} 
+                        { 
+                            print "Got identifier $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+##------------end-------------
+
+
