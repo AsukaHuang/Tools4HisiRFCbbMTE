@@ -1,0 +1,138 @@
+##-----------start------------
+
+bodySession :   '//definition Start' rxStruct comments rxMap comments txStruct comments txMap '//definition Stop'
+                        {
+                            print "Got suit html_bodysection\n" if $::DEBUG_PARSER;
+                            $return = {      rxStruct => $item[2],
+                                             rxMap => $item[4],
+                                             txStruct => $item[6],
+                                             txMap  => $item[8]};
+                        }
+                        | <error>
+
+rxStruct    :   'typedef' 'struct' 'RX_Pow_frq_mapping_s' '{' declare(s?) '}' 'RX_Pow_frq_mapping_t;'
+                {
+                    print "Got RX Struct declare\n" if $::DEBUG_PARSER;
+                    $return = $item[5];
+                }
+
+txStruct    :   'typedef' 'struct' 'TX_Pow_frq_mapping_s' '{' declare(s?) '}' 'TX_Pow_frq_mapping_t;'
+                {
+                    print "Got TX Struct declare\n" if $::DEBUG_PARSER;
+                    $return = $item[5];
+                }
+
+
+
+declare     :   wordDeclare ';'
+                {
+                    $return = $item[1];
+                }
+                |aryDeclare ';'
+                {
+                    $return = $item[1];
+                }
+                | comment
+                {
+                    $return = {
+                                type => "",
+                                name => "",
+                                ary => 'false'};
+                }
+
+rxMap    :   'const' 'RX_Pow_frq_mapping_t' 'RX_PowFre_Mapping[]' '=' '{' singleSuit(s?) '}' ';'
+                {
+                    print "Got rxMap declare:  $item[6] \n" if $::DEBUG_PARSER;
+                    $return = $item[6];
+                }
+
+txMap    :   'const' 'TX_Pow_frq_mapping_t' 'TX_PowFreq_Mapping[]' '=' '{' singleSuit(s?) '}' ';'
+                {
+                    print "Got txMap declare:  $item[6] \n" if $::DEBUG_PARSER;
+                    $return = $item[6];
+                }
+
+
+singleSuit      :  comments '{' mapElement(s?)'}' m{\,?} comments
+                {
+                    print "Got singleSuit declare:  $item[2] \n" if $::DEBUG_PARSER;
+                    $return = $item[3];
+                }
+
+
+
+
+mapElement      :   cString m{\,?}
+                {
+                    $return = $item[1];
+                }
+                |cDouble m{\,?}
+                {
+                    $return = $item[1];
+                }
+                |cAry  m{\,?}
+                {
+                    $return = $item[1];
+                }
+
+cAry     : '{' cDoubleWithComma(s?) '}'
+                {
+                    $return = $item[2];
+                }
+                |'{' cStringWithComma(s?) '}'
+                {
+                    $return = $item[2];
+                }
+
+cDoubleWithComma     : cDouble m{\,?}
+            {
+                $return = $item[1];
+            }
+
+cDouble     : m{[\w\.\-\*]+}
+            {
+                print "cDouble:$item[1],\n" if $::DEBUG_PARSER;
+                $return = $item[1];
+            }
+
+cStringWithComma     : cString m{\,?}
+            {
+                $return = $item[1];
+            }
+
+cString     : '"' m{[\w\.\-\,\@]*} '"'
+            {
+                print "cString:$item[2],\n" if $::DEBUG_PARSER;
+                $return = $item[2];
+            }
+
+wordDeclare  : m{\w+} word
+        {
+            $return = {
+                type => $item[1],
+                name => $item[2],
+                ary => 'false'};
+        }
+
+aryDeclare  : m{\w+} word '[' word ']'
+        {
+            $return = {
+                type => $item[1],
+                name => $item[2].'['.$item[4].']',
+                ary => 'true'};
+        }
+
+comments  : comment(s?) {$return = "";}
+comment  :  m{//.*} {$return = "";} 
+            |m{#.*} {$return = "";}
+
+word     :  m{\w+}
+         {       
+            $return = $item[1];
+         }
+
+
+
+##------------end-------------
+
+
