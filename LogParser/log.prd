@@ -1,0 +1,161 @@
+##-----------start------------
+
+bodySession :   testflowStart statement(s?) TestflowEnd
+                        {
+                            print "Got html_ body_section\n" if $::DEBUG_PARSER;
+                            $return = $item[2];
+                        }
+                        | <error>
+
+statement           :   m{Site\s*TNum\s*Test\s*TestSuite\s*p/f\s*Pin\s*LoLim\s*Measure\s*HiLim\s*TestFunc\s*VectLabel\s*T_Equ\s*T_Spec\s*T_Set\s*L_Equ\s*L_Spec\s*L_Set} 
+                         m{-+}
+                        resultblock(s?)
+                         m{-+}
+                        'TestSuite:' string m{passed|failed}i
+                        {
+                            print "Got statement at $thisline: assignment at line\n" if $::DEBUG_PARSER; 
+                            $return = $item[3];
+                        }
+                    |  'Executed Testmethod' m{\S+\s*:?\s*\d?} 
+                        { print "get Executed Method\n" if $::DEBUG_PARSER;}
+                    |  getBin
+                        { print "get multi Bin\n" if $::DEBUG_PARSER;}
+
+resultblock           : Site  TNum      Test                 TestSuite       p_f      Pin             LoLim m{(<=|==)?} Measure m{(<=|==)?}  HiLim  TestFunc  VectLabel  T_Equ  T_Spec  T_Set  L_Equ  L_Spec  L_Set
+                        {
+                            print "Got tdblock at $thisline: $item[2],$item[8] at line\n" if $::DEBUG_PARSER; 
+                            $return = {      site => $item[1],
+                                             TNum => $item[2],
+                                             Test => $item[3],
+                                             TestSuite => $item[4],
+                                             p_f => $item[5],
+                                             Pin => $item[6],
+                                             LoLim => $item[7],
+                                             Measure => $item[9],
+                                             HiLim => $item[11],
+                                             TestFunc => $item[12],
+                                             VectLabel => $item[13]};
+#                                             TNum => $item[2],
+#                                             main  => $item[8]};
+                        }
+Site             :  number
+                        { 
+                            print "Got Site: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+TNum             :  number
+                        { 
+                            print "Got TNum: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+Test             :  m{\S+}
+                        { 
+                            print "Got TestName: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+TestSuite             :  m{\S+}
+                        { 
+                            print "Got TestSuite: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+p_f             :  m{passed|failed}i
+                        { 
+                            print "Got p_f: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+Pin             :  m{\w+}
+                        { 
+                            print "Got Pin: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+                | '.'{$return = "";}
+LoLim             :  number_unit
+                        { 
+                            print "Got LoLim: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+                | '.'{$return = "";}
+HiLim             :  number_unit 
+                        { 
+                            print "Got HiLim: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+                | '.'{$return = "";}
+Measure             :  number_unit
+                        { 
+                            print "Got Measure: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+                | '.'{$return = "";}
+TestFunc             :  m{\w+}
+                        { 
+                            print "Got TestFunc: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+                | m{\.0?} {$return = "";}
+VectLabel             :  m{\w+}
+                        { 
+                            print "Got VectLabel: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+                | '.'{$return = "";}
+T_Equ             :  m{\d*}
+                        { 
+                            print "Got T_Equ: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+T_Spec             :  m{\d*}
+                        { 
+                            print "Got T_Spec: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+T_Set             :  m{\d*}
+                        { 
+                            print "Got T_Set: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+L_Equ             :  m{\d*}
+                        { 
+                            print "Got L_Equ: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+L_Spec             :  m{\d*}
+                        { 
+                            print "Got L_Spec: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+L_Set             :  m{\d*}
+                        { 
+                            print "Got L_Set: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+string             :  m{[a-zA-Z]\w*} #m{\"(.*?)\"} 
+                        { 
+                            print "Got String: $item[1]\n" if $::DEBUG_PARSER; 
+                            $return = $item[1];
+                        }
+number             :  m{-?\d+\.?\d?}
+                        { 
+                            $return = $item[1];
+                        }
+number_unit             :  m{-?(\d+\.?\d+|nan|inf)\s+(mA|mV|dBm|dB|%)?}
+                        { 
+                            $return = $item[1];
+                        }
+
+testflowStart           :  'Testflow started on' m{.+}
+                        { 
+                            print "Got testflowStart\n" if $::DEBUG_PARSER; 
+                        }
+getBin             :  'Site' m{\d*} 'has' m{\w+} '. Binned to bin' m{.*}
+                        { 
+                            print "Got testflowEnd\n" if $::DEBUG_PARSER; 
+                        }
+TestflowEnd             :  'Testflow ended'
+                        { 
+                            print "Got testflowEnd\n" if $::DEBUG_PARSER; 
+                        }
+
+##------------end-------------
+
+
